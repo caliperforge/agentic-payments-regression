@@ -1,0 +1,70 @@
+agentic-payments-regression
+Copyright 2026 CaliperForge / Michael Moffett.
+
+This project's own code (everything outside `lib/`) is licensed under the
+Apache License, Version 2.0. See `LICENSE` for the full text.
+
+This NOTICE file records the third-party components this project uses and the
+license terms under which each is consumed, per Apache-2.0 §4(d).
+
+========================================================================
+This project's own code
+========================================================================
+
+The Apache-2.0 license covers THIS repository's own code: the twin sources
+under `src/V0*.sol` (and `src/mocks/`), the tests under `test/` (including
+`test/planted/` and `test/harness/`), the docs under `docs/`, the CI
+scaffolding under `.github/` and `ci/`, and the top-level `run.sh`,
+`README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `coverage_map.md`, and
+`disclosures/TEMPLATE.md`. It does NOT cover the vendored upstream work
+described below.
+
+========================================================================
+THIRD-PARTY COMPONENT: forge-std
+========================================================================
+
+This repository consumes `forge-std` as a pinned Git submodule at
+`lib/forge-std`:
+  URL:       https://github.com/foundry-rs/forge-std
+  Commit:    5cf980eefbf8a54050628334163127ed35453558
+  Placement: `lib/forge-std` (submodule pointer; this repository does not
+             redistribute forge-std source directly)
+
+`forge-std` is dual-licensed by foundry-rs under the choice of MIT or
+Apache-2.0. This project consumes `forge-std` under both licenses (the
+dual-license grant is preserved verbatim in `lib/forge-std/LICENSE-MIT`
+and `lib/forge-std/LICENSE-APACHE` at the pinned commit).
+
+========================================================================
+Case-provenance credit block
+========================================================================
+
+The M1 shipping set (V01_Replay, V02_Overpayment, V03_CrossResource,
+V04_DoubleGrant) reproduces four published x402 attack classes catalogued
+in `coverage_map.md`:
+
+  - arXiv:2605.11781, "Five Attacks on x402 Agentic Payment Protocol"
+    (payment-authorization integrity classes ×3; settlement-race duplicate
+    service grant class ×1).
+  - arXiv:2605.30998, "Free-Riding the Agentic Web" (cross-class overlap
+    on facilitator-side accounting).
+  - arXiv:2604.11430 (PII-hardening methodology; informs the clean-twin
+    baseline, not itself a reproduced twin).
+
+The M1+ / novel-variant additions (V05_CrossDomain, V06_DelegationCap)
+are class-level twins against synthesized minimal contracts; they cover
+attack classes the arXiv corpus does not name and are not disclosures of
+any specific live SDK. Attribution to the paper authors is preserved in
+`coverage_map.md` under the per-class rows.
+
+Reference implementation being reproduced: the Coinbase x402 reference
+family and the Linux Foundation x402 Foundation working-group spec. This
+repository does not vendor any x402 SDK source; the twin contracts are
+minimal reference implementations authored for CI use.
+
+========================================================================
+Toolchain authors
+========================================================================
+
+  Foundry (forge, cast, anvil): foundry-rs.
+  Solidity: Ethereum Foundation Solidity team.

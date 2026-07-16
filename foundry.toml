@@ -1,0 +1,27 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+# Fuzz + invariant budgets tuned for CI-runnable-in-under-5-minutes on
+# ubuntu-latest. Nightly workflow (if added M2) can raise these.
+fuzz = { runs = 512 }
+invariant = { runs = 128, depth = 32, fail_on_revert = false }
+# Emit the marker the run.sh + CI matrix greps for on the planted legs.
+# Property tests use `assertTrue(cond, "INVARIANT VIOLATED <name>")`  -  see
+# planted twin template in the M2 CONTRIBUTING guide once the first twin lands.
+
+[profile.ci]
+# CI profile inherits default; overrides live here as they surface.
+fuzz = { runs = 1024 }
+invariant = { runs = 256, depth = 48, fail_on_revert = false }
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = false
+int_types = "long"

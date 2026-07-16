@@ -1,0 +1,14 @@
+# Foundry
+cache/
+out/
+broadcast/
+
+# lib/ is a git submodule tree  -  see .gitmodules once M1 twins land.
+# We do not ignore lib/ itself so `forge install` submodule adds are tracked.
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo

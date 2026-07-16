@@ -1,0 +1,148 @@
+name: ci
+
+# agentic-payments-regression CI  -  M1 scaffold.
+#
+# Implements spec.md §AC-6 (clean/planted matrix) + §AC-7 (one-command runner)
+# + §AC-8 (green from first meaningful commit).
+#
+# CI shape ported from caliperforge/hyperevm-safety (proof_register row 7):
+# per-twin path-existence gates so each planted-twin pair flips its jobs
+# from "deferred" to "real-work-green" the moment its src/+test/+test/planted/
+# files land. This keeps main green through the scaffold-first / twins-second
+# landing sequence without the workflow itself needing edits per-twin.
+#
+# The clean/planted matrix scan is driven by run.sh; the CI workflow wraps it
+# so both local and CI paths share the same runner.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  # Build gate  -  forge build must succeed before any twin leg runs.
+  library-build:
+    name: library-build (forge build src/ test/)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Detect any Solidity source
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          n_src=$(find src -maxdepth 2 -type f -name '*.sol' 2>/dev/null | wc -l | tr -d ' ')
+          n_test=$(find test -maxdepth 2 -type f -name '*.sol' 2>/dev/null | wc -l | tr -d ' ')
+          echo "n_src=$n_src n_test=$n_test"
+          if [ "$n_src" -gt 0 ] || [ "$n_test" -gt 0 ]; then
+            echo "wired=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "wired=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::src/ + test/ empty (M1 scaffold pre-implementation); library-build deferred vacuous-green."
+          fi
+
+      - name: Foundry setup (pinned)
+        if: steps.gate.outputs.wired == 'true'
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: forge build
+        if: steps.gate.outputs.wired == 'true'
+        run: forge build --sizes
+
+  # Runner-integration gate  -  ./run.sh executes and exits per its contract.
+  # This job wraps the same runner that operates locally, so a green CI run
+  # is equivalent to a green local run.
+  runner-integration:
+    name: runner-integration (./run.sh clean+planted matrix)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: library-build
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Foundry setup (pinned)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: ./run.sh
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./run.sh
+          ./run.sh
+
+  # Merge gate: N=16 distinct fuzz seeds must all fail every planted twin
+  # (V01_Replay, V02_Overpayment, V03_CrossResource, V04_DoubleGrant, and
+  # the M1+ / novel additions V05_CrossDomain, V06_DelegationCap).
+  # Turns the base planted matrix's one-seed catch into a deterministic
+  # N-of-N certification per suite. No new twin merges unless it certifies
+  # fail-on-all-N. Mirrors the identical leg shipped in
+  # caliperforge/euler-earn-invariants and caliperforge/uniswap-v4-invariants
+  # (proof_register row 7). See docs/reachability.md for the rule.
+  reachability-multi-seed:
+    name: reachability-multi-seed (16 seeds x 6 planted suites)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: library-build
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Foundry setup (pinned)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: forge build
+        run: forge build
+
+      - name: Reachability certified across 16 seeds
+        shell: bash
+        run: |
+          set -uo pipefail
+          chmod +x ./ci/reachability_leg.sh
+          ./ci/reachability_leg.sh
+
+  # macOS runner  -  the spec calls out macOS + Linux as the local run targets;
+  # CI covers both via a separate macos-latest leg on the same runner to
+  # detect bash-3.2 / macOS-tool-flag drift early.
+  runner-integration-macos:
+    name: runner-integration-macos (./run.sh clean+planted matrix on macos-latest)
+    runs-on: macos-latest
+    timeout-minutes: 25
+    needs: library-build
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Foundry setup (pinned)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: ./run.sh
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./run.sh
+          ./run.sh
