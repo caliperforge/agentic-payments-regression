@@ -7,7 +7,7 @@
 Before filing a report, please read:
 
 - A passing CI run of `agentic-payments-regression` against a protocol's x402 integration does NOT certify the integration is safe. The library catches the bug classes the planted twins encode (see `coverage_map.md`); the residual surface is the integrator's.
-- An `INVARIANT VIOLATED <name>` marker firing in a `test/*/planted/` twin (or in any documented planted-hunk reference) is the library **working as intended**. That output is not a vulnerability in `agentic-payments-regression`.
+- An `INVARIANT VIOLATED <name>` marker firing in a `test/planted/` twin (or in any documented planted-hunk reference) is the library **working as intended**. That output is not a vulnerability in `agentic-payments-regression`.
 - This library is not a runtime monitor and does not encode every failure mode contemplated by the x402 spec. Read the x402 spec directly.
 
 ## What to report through this policy
@@ -39,7 +39,7 @@ Please include:
 
 ## Disclosure window
 
-- **Default:** 90 days from acknowledgement to public disclosure. This matches the industry-standard responsible-disclosure window used by CERT/CC and most maintainer surfaces.
+- **Default:** 90 days from acknowledgement to public disclosure. That is deliberately longer than CERT/CC's own 45-day default, because a fix here may need coordination with a downstream integrator.
 - **Extension:** we may request an extension if the fix requires coordination with a downstream integrator; the extension will be justified in writing and capped.
 - **Short window:** if the bug is actively exploited or exposes end-user funds, we will move to a shorter window and coordinate with the affected integrator.
 

@@ -1,6 +1,14 @@
 # agentic-payments-regression (v0.1, M1 scaffold)
 
-**Status.** M1 scaffold in staging. Public flip pending §4a (outbound-text review) and §4b (code-quality review) gates on the M1 bundle.
+## Status
+
+M1 is complete.
+
+Six planted twins ship, `src/V01`–`src/V06`, each a clean/planted pair. `./run.sh` measured 6/6 clean legs passing and 6/6 planted legs firing on 2026-08-08.
+
+Not all six are reproductions. V01, V03, and V04 reproduce attacks published in the arXiv papers catalogued in `coverage_map.md`. V05 and V06 encode classes those papers don't name; we wrote them. V02 reproduces a bug class that the 2026-08-08 re-pull of the corpus could not source to any of the three papers, and `coverage_map.md` §6a says so.
+
+M1 has no coverage of the off-chain LLM surface, on-chain observability, or the PII-hardening defense side. `coverage_map.md` describes M2 work. M2 isn't scheduled and has no date.
 
 **Intended home on public flip.** `caliperforge/agentic-payments-regression` (name ratified per `ops/decisions.md` D-ef-anchor-repo-naming-2026-07-14, 2026-07-14).
 
@@ -10,7 +18,7 @@
 
 `agentic-payments-regression` is an open-source library of CI-runnable planted-twin reproductions for the **x402 agentic-payments** threat model. Each planted twin ships as a `clean` + `planted` pair against a reference x402 implementation, with a CI matrix that asserts the clean leg passes silently and the planted leg surfaces an `INVARIANT VIOLATED <name>` marker.
 
-The M1 shipping set reproduces four published x402 attack classes from the arXiv corpus catalogued in `coverage_map.md` (payment-authorization integrity ×3 + settlement-race duplicate service grants ×1, drawn from arXiv:2605.11781 and arXiv:2605.30998; PII-hardening methodology paper arXiv:2604.11430 informs the clean-twin baseline but is not itself a reproduced twin). The **M1+ / novel-variant additions (2026-07-15)** land two further twins covering classes the arXiv corpus does not name: V05 (EIP-712 domain-separator underconstraint / cross-facilitator + cross-chain replay) and V06 (session-key cumulative-cap violation on a Coinbase `SpendPermissionManager`-shape delegation). Both are class-level twins against synthesized minimal contracts, not disclosures of a specific live SDK. The library is a **candidate for OWASP incubation**; a project-proposal will be filed with the OWASP Projects Committee once M2 (further novel-variant hunt + responsible-disclosure record) lands. It is not an OWASP project today.
+The M1 shipping set reproduces three published x402 attack classes from the arXiv corpus catalogued in `coverage_map.md`: payment replay (arXiv:2605.11781v1 §3.2), signature-to-resource binding gap (arXiv:2605.11781v1 §4.6), and settlement-race duplicate service grants (arXiv:2605.30998v1 §4.3). The PII-hardening methodology paper arXiv:2604.11430v2 informs the clean-twin baseline but is not itself a reproduced twin. A fourth M1 twin, `V02_Overpayment`, reproduces a bug class that the 2026-08-08 corpus re-pull could not source to any of the three papers; `coverage_map.md` §6a records that. The **M1+ / novel-variant additions (2026-07-15)** land two further twins covering classes the arXiv corpus does not name: V05 (EIP-712 domain-separator underconstraint / cross-facilitator + cross-chain replay) and V06 (session-key cumulative-cap violation on a Coinbase `SpendPermissionManager`-shape delegation). Both are class-level twins against synthesized minimal contracts, not disclosures of a specific live SDK. The library is a **candidate for OWASP incubation**; a project-proposal will be filed with the OWASP Projects Committee once M2 (further novel-variant hunt + responsible-disclosure record) lands. It is not an OWASP project today.
 
 ## Why this exists
 
@@ -24,7 +32,7 @@ The thesis: the triage is the product. A planted-twin catch is a maintainer-acti
 ## What this is NOT
 
 - **Not an audit.** A passing CI run on a fork of this library against a protocol's x402 integration does not certify the integration is safe. The library catches the bug classes the invariants encode; the residual surface belongs to the integrator.
-- **Not a "would-have-caught" story.** The M1 planted twins reproduce published attacks from the arXiv corpus. They confirm the CI-runnable planted-twin shape catches the published bug class; they do not claim the harness would have pre-empted the original discovery. The novel-variant hunt is M2 scope, filed separately after M1 acceptance.
+- **Not a "would-have-caught" story.** The M1 planted twins that carry a paper anchor reproduce published attacks from the arXiv corpus. They confirm the CI-runnable planted-twin shape catches the published bug class; they do not claim the harness would have pre-empted the original discovery. The novel-variant hunt is M2 scope, filed separately after M1 acceptance.
 - **Not an OWASP project.** OWASP does not have a project by this name today. We intend to file an incubation proposal to the OWASP Projects Committee after M2 lands. Any language you see referring to OWASP is forward-looking.
 - **Not a runtime monitor.** The properties are pre-deploy CI gates. Runtime monitoring of live x402 facilitators is a separate concern owned by other actors and out of scope here.
 - **Not a substitute for the x402 spec's own security review.** Read the x402 spec directly; this library encodes a subset of the failure modes the spec's threat model already contemplates.
@@ -100,7 +108,7 @@ ci/
 src/
   README.md                                  # src/ overview + naming convention
   V01_Replay.sol                             # payment-replay reproduction (arXiv:2605.11781)
-  V02_Overpayment.sol                        # amount-not-bound-to-posted-price (arXiv:2605.11781)
+  V02_Overpayment.sol                        # amount-not-bound-to-posted-price (no corpus source; coverage_map.md §6a)
   V03_CrossResource.sol                      # signature-semantic-gap (arXiv:2605.11781)
   V04_DoubleGrant.sol                        # CEI-violation duplicate-grant (arXiv:2605.30998)
   V05_CrossDomain.sol                        # EIP-712 domain-separator underconstraint (novel; M1+)
@@ -130,6 +138,7 @@ disclosures/
 docs/
   reachability.md                            # 16-seed reachability rule + per-twin k/N verdict
   reachability_run.log                       # full per-seed run log (2026-07-15 local certification)
+  oracle_248to1_disposition.md               # disposition of the 248:1 HTTP-grant figure (2026-08-08)
 ```
 
 The layout follows the `caliperforge/hyperevm-safety` planted-twin shape (proof_register row 7) adapted to the x402 substrate. It does not vendor hyperevm-safety code; the shape is the reference, not the source.
